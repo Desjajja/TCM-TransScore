@@ -55,18 +55,38 @@ class TheoreticalScorer:
         加载评分准则文件
         
         支持格式：
-        - .txt: 纯文本准则
+        - .txt: 纯文本准则（仅criteria内容，name使用默认值）
         - .json: JSON格式，包含name和criteria字段
+        - .yaml/.yml: YAML格式，包含name和criteria字段
+        
+        JSON/YAML格式示例：
+        {
+            "name": "奈达功能对等理论评分",
+            "criteria": "## 评分准则...\n..."
+        }
         """
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 if file_path.endswith('.json'):
+                    # JSON格式
                     data = json.load(f)
                     self.criteria = data.get('criteria', '')
                     self.criteria_name = data.get('name', '翻译理论评分')
+                elif file_path.endswith(('.yaml', '.yml')):
+                    # YAML格式
+                    try:
+                        import yaml
+                        data = yaml.safe_load(f)
+                        self.criteria = data.get('criteria', '')
+                        self.criteria_name = data.get('name', '翻译理论评分')
+                    except ImportError:
+                        logger.warning("未安装PyYAML库，无法加载YAML格式准则文件")
+                        logger.info("请运行: pip install pyyaml")
+                        raise
                 else:
                     # 纯文本格式
                     self.criteria = f.read().strip()
+                    self.criteria_name = "翻译理论评分"  # 纯文本使用默认名称
             
             logger.info(f"成功加载评分准则: {self.criteria_name}")
             logger.debug(f"准则内容长度: {len(self.criteria)} 字符")
