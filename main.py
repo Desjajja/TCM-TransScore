@@ -28,15 +28,39 @@ logger = logging.getLogger(__name__)
 
 class LMClient:
     """
-    OpenAI格式API客户端，用于语法质量评估
-    支持官方OpenAI API以及兼容OpenAI格式的各类API网关
+    OpenAI格式API客户端，支持多用途模型调用
+    
+    用途：
+    1. 语法质量评估（默认使用通用配置）
+    2. 翻译理论评分（可指定critic模型）
+    
+    支持LiteLLM Proxy代理和直接API调用
     """
     
-    def __init__(self):
-        """初始化OpenAI客户端，读取环境变量配置"""
-        self.api_key = os.getenv("OPENAI_API_KEY")
-        self.base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
-        self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    def __init__(self, model_type="default"):
+        """
+        初始化OpenAI客户端，读取环境变量配置
+        
+        参数:
+            model_type: 模型类型
+                - "default": 默认配置（OPENAI_*环境变量）
+                - "critic": 理论评分模型（CRITIC_*环境变量）
+        """
+        self.model_type = model_type
+        
+        # 根据模型类型选择不同的环境变量
+        if model_type == "critic":
+            # Critic模型配置（用于翻译理论评分）
+            self.api_key = os.getenv("CRITIC_API_KEY") or os.getenv("OPENAI_API_KEY")
+            self.base_url = os.getenv("CRITIC_BASE_URL", os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"))
+            self.model = os.getenv("CRITIC_MODEL", "critic")  # LiteLLM proxy中的critic模型
+            logger.info(f"初始化Critic模型客户端...")
+        else:
+            # 默认配置（用于语法检查等通用任务）
+            self.api_key = os.getenv("OPENAI_API_KEY")
+            self.base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+            self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        
         self.client = None
         self.available = False
         
@@ -45,13 +69,13 @@ class LMClient:
                 from openai import OpenAI
                 self.client = OpenAI(api_key=self.api_key, base_url=self.base_url)
                 self.available = True
-                logger.info(f"OpenAI客户端初始化成功，使用模型: {self.model}")
+                logger.info(f"LMClient初始化成功 [类型: {model_type}, 模型: {self.model}]")
             except ImportError:
-                logger.warning("未安装openai库，语法检查功能将不可用")
+                logger.warning("未安装openai库，LM功能将不可用")
             except Exception as e:
-                logger.warning(f"OpenAI客户端初始化失败: {e}")
+                logger.warning(f"LMClient初始化失败: {e}")
         else:
-            logger.info("未配置OPENAI_API_KEY，语法检查功能将不可用")
+            logger.info(f"未配置API密钥 [类型: {model_type}]，相关功能将不可用")
     
     def generate(self, 
                  prompt: str, 

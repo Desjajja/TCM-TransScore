@@ -25,15 +25,22 @@ class TheoreticalScorer:
     分数用\\boxed{}包裹，便于提取
     """
     
-    def __init__(self, lm_client, criteria_file: Optional[str] = None):
+    def __init__(self, lm_client=None, criteria_file: Optional[str] = None):
         """
         初始化理论评分器
         
         参数:
             lm_client: LMClient实例，用于API调用
+                      如果为None，会自动创建critic模型客户端
             criteria_file: 评分准则文件路径（文本或JSON格式）
         """
-        self.lm_client = lm_client
+        # 如果未提供lm_client，创建专用的critic模型客户端
+        if lm_client is None:
+            from main import LMClient
+            self.lm_client = LMClient(model_type="critic")
+            logger.info("使用专用的Critic模型进行理论评分")
+        else:
+            self.lm_client = lm_client
         self.criteria = ""
         self.criteria_name = "翻译理论评分"
         

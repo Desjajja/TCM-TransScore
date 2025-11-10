@@ -1,0 +1,128 @@
+# LiteLLM Proxy 配置文件
+# 用于TCM-TransScore翻译质量评估系统
+
+model_list:
+  # ============================================================
+  # Translator模型 - 待测翻译系统
+  # ============================================================
+  # 这是需要评估的翻译模型，负责将中医文本翻译为英文
+  # 在实际评估中，translator的输出会被送入评估系统进行打分
+  
+  - model_name: translator
+    litellm_params:
+      model: openai/gpt-4o-mini  # 可替换为待测模型，如：claude-3-5-sonnet-20241022
+      api_key: os.environ/OPENAI_API_KEY
+      api_base: https://api.openai.com/v1
+      # 翻译模型配置
+      temperature: 0.3  # 较低的温度确保翻译一致性
+      max_tokens: 2000  # 足够长以支持中医文献翻译
+    model_info:
+      mode: chat
+      description: "待评估的翻译模型，用于中医文献的中译英"
+      tags: ["translation", "tcm", "to-be-evaluated"]
+
+  # ============================================================
+  # Critic模型 - 翻译理论评分模型
+  # ============================================================
+  # 这是评审模型，负责根据翻译理论准则对译文进行评分
+  # 需要具备以下能力：
+  # 1. 理解翻译理论准则（如奈达功能对等理论、Skopos理论等）
+  # 2. 分析源文本、译文、参考译文的对应关系
+  # 3. 给出结构化的评价反馈和量化分数
+  # 4. 按照要求的格式输出（\boxed{分数}）
+  
+  - model_name: critic
+    litellm_params:
+      model: openai/gpt-4o  # 推荐使用能力更强的模型作为评审
+      api_key: os.environ/OPENAI_API_KEY
+      api_base: https://api.openai.com/v1
+      # 评审模型配置
+      temperature: 0.3  # 保持评分一致性
+      max_tokens: 1500  # 足够长以支持详细的评价反馈
+    model_info:
+      mode: chat
+      description: "评审模型，根据翻译理论准则进行理论评分"
+      tags: ["evaluation", "critic", "translation-theory"]
+
+# ============================================================
+# 通用配置
+# ============================================================
+general_settings:
+  # 日志级别
+  log_level: INFO
+  
+  # 超时设置（秒）
+  request_timeout: 60
+  
+  # 重试配置
+  num_retries: 3
+  retry_policy:
+    - status_code: 429  # Rate limit
+      delay: 2
+      max_retries: 5
+    - status_code: 500  # Server error
+      delay: 1
+      max_retries: 3
+
+# ============================================================
+# 使用说明
+# ============================================================
+# 
+# 1. 环境变量配置
+#    - OPENAI_API_KEY: OpenAI API密钥（必需）
+#    - 如使用其他API，需设置相应的环境变量
+#
+# 2. 启动LiteLLM Proxy
+#    ```bash
+#    litellm --config litellm_proxy.yaml --port 4000
+#    ```
+#
+# 3. 在代码中使用
+#    ```python
+#    # Translator模型（待测）
+#    export TRANSLATOR_BASE_URL="http://localhost:4000"
+#    export TRANSLATOR_MODEL="translator"
+#    
+#    # Critic模型（评审）
+#    export CRITIC_BASE_URL="http://localhost:4000"
+#    export CRITIC_MODEL="critic"
+#    ```
+#
+# 4. 模型替换示例
+#    如需评估Claude模型作为translator:
+#    ```yaml
+#    - model_name: translator
+#      litellm_params:
+#        model: anthropic/claude-3-5-sonnet-20241022
+#        api_key: os.environ/ANTHROPIC_API_KEY
+#    ```
+#
+# 5. 多模型对比评估
+#    可以配置多个translator模型进行对比：
+#    ```yaml
+#    - model_name: translator-gpt4
+#      litellm_params:
+#        model: openai/gpt-4o-mini
+#    
+#    - model_name: translator-claude
+#      litellm_params:
+#        model: anthropic/claude-3-5-sonnet-20241022
+#    ```
+#
+# ============================================================
+# 推荐的模型组合
+# ============================================================
+#
+# 方案1：经济型（开发测试）
+#   - Translator: gpt-4o-mini
+#   - Critic: gpt-4o-mini
+#
+# 方案2：标准型（日常评估）
+#   - Translator: 待测模型（任意）
+#   - Critic: gpt-4o
+#
+# 方案3：高精度型（论文/报告）
+#   - Translator: 待测模型（任意）
+#   - Critic: gpt-4o 或 claude-3-5-sonnet-20241022
+#
+# ============================================================
