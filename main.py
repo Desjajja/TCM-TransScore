@@ -880,6 +880,15 @@ if __name__ == "__main__":
         print(f"  文本长度 - 参考: {diag['text_length']['reference']} 词, "
               f"机器翻译: {diag['text_length']['machine']} 词")
         
+        # 导出结果为JSON
+        import os
+        data_dir = "data"
+        os.makedirs(data_dir, exist_ok=True)
+        output_path = os.path.join(data_dir, "evaluation_result.json")
+        with open(output_path, 'w', encoding='utf-8') as f:
+            json.dump(result, f, ensure_ascii=False, indent=2)
+        print(f"\n结果已保存到: {output_path}")
+        
         print("\n" + "=" * 60)
         print("评估完成")
         print("=" * 60)

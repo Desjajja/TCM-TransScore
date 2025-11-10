@@ -147,6 +147,8 @@ export OPENAI_MODEL="gpt-4"
 python main.py
 ```
 
+运行后，评估结果会自动保存到 `data/evaluation_result.json`（目录会自动创建）。
+
 ### 3. 使用API进行评估
 
 ```python
@@ -220,6 +222,17 @@ print(f"诊断信息: {result['diagnostics']}")
 ---
 
 ## 输出结果格式
+
+### 保存位置
+
+运行 `python main.py` 时，评估结果自动保存到：
+```
+data/evaluation_result.json
+```
+
+`data/` 目录会自动创建（如果不存在），评估结果以JSON格式保存。
+
+### 结果结构
 
 ```json
 {
