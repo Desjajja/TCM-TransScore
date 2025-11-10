@@ -31,40 +31,47 @@ TCM-TransScore 是一个专门用于中医文献英文翻译质量评估的综�
 
 ## 环境需求与安装
 
-### Python版本
+### 1. 安装 uv 包管理器
 
-- **推荐**：Python 3.9 - 3.12
-- **最低**：Python 3.9
-
-### 安装步骤
-
-1. **克隆仓库或解压项目文件**
-
-2. **安装依赖**
-
+#### macOS
 ```bash
-# 更新pip
-pip install -U pip
-
-# 安装项目（开发模式）
-pip install -e .
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-3. **安装PyTorch**（如果未安装）
-
-```bash
-# CPU版本
-pip install torch --index-url https://download.pytorch.org/whl/cpu
-
-# GPU版本（CUDA 11.8）
-pip install torch --index-url https://download.pytorch.org/whl/cu118
+#### Windows
+```powershell
+powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-4. **下载SpaCy英文模型**（可选，用于术语上下文验证）
-
+#### 验证安装
 ```bash
-python -m spacy download en_core_web_lg
+uv --version
 ```
+
+### 2. 安装项目
+
+#### Python版本
+- **要求**：Python 3.13
+- **管理**：通过 uv 自动管理
+
+#### 安装步骤
+
+1. **克隆仓库**
+```bash
+git clone <repository-url>
+cd TCM-TransScore
+```
+
+2. **安装所有依赖**
+```bash
+uv sync
+```
+
+**就是这样！** uv 会自动：
+- 安装正确的 Python 版本（3.13）
+- 创建虚拟环境
+- 安装所有项目依赖（包括 PyTorch、SpaCy 模型等）
+- 无需手动安装任何包
 
 ---
 
@@ -121,34 +128,34 @@ export OPENAI_MODEL="gpt-4"
 **注意**：如果未配置API，语法检查将自动降级为启发式规则，评估权重会相应调整。
 
 ---
-
 ## 快速开始
 
 ### 1. 准备术语库
 
-创建JSON格式的术语库文件（例如 `terminology.json`）：
+创建 JSON格式的术语库文件（例如 `terminology.json`）：
 
 ```json
 {
-  "Yin deficiency": "阴虚",
-  "Yang deficiency": "阳虚",
-  "Qi deficiency": "气虚",
-  "liver depression": "肝郁",
-  "spleen deficiency": "脾虚",
+  "Yin deficiency": "陰虧",
+  "Yang deficiency": "阳虧",
+  "Qi deficiency": "气虧",
+  "liver depression": "肉郆",
+  "spleen deficiency": "脚虧",
   "damp-heat": "湿热"
 }
 ```
 
 ### 2. 运行示例
 
-项目内置了演示示例，可以直接运行：
+项目内置了演示示例，使用 uv 运行：
 
 ```bash
-python main.py
+uv run main.py
 ```
 
 运行后，评估结果会自动保存到 `data/evaluation_result.json`（目录会自动创建）。
 
+### 3. 使用API进行评估
 ### 3. 使用API进行评估
 
 ```python
@@ -324,10 +331,10 @@ evaluator.weights = {
 
 ## 性能建议
 
-1. **首次运行预热**
+1. **首次运行预燭**
    ```bash
-   # 预热NLI模型
-   python main.py
+   # 预燭 NLI 模型
+   uv run main.py
    ```
 
 2. **批量评估优化**
